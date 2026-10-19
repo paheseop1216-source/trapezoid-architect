@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import StageSvg from '../components/StageSvg.jsx';
 import { analyze, sub, dot } from './geo.js';
 import { COL, MISSIONS, MCQ, VOTE, WORD, sliderWord } from './data.js';
+import { STARS, rankTitle } from './stars.js';
 
 export const FONT = '"BMDOHYEON",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif';
 
@@ -20,9 +21,9 @@ export async function fontReady() {
   } catch (e) { return false; }
 }
 
-/* 건물 그림을 이미지로 (선택 표시 없이, 평행 표시는 함께) */
+/* 건물 그림을 이미지로 (선택 표시 없이) */
 export async function designImage(design, w, h) {
-  const markup = renderToStaticMarkup(<StageSvg design={design} showMarks exportMode width={w} height={h} />);
+  const markup = renderToStaticMarkup(<StageSvg design={design} exportMode width={w} height={h} />);
   const img = new Image();
   await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(markup); });
   return img;
@@ -83,68 +84,94 @@ function canvasQuad(ctx, p, x, y, size) {
 }
 const blankOr = t => ((t && t.trim()) ? t.trim() : '(아직 쓰지 않았어요)');
 
-export async function buildSquare(state, starCount, starTotal) {
+/* 오늘 결과물 1080×1080 — 맨 위에 칭호와 받은 배지, 그 아래 건물·기록·토론·소감 */
+export async function buildSquare(state, earned) {
   const W = 1080, c = document.createElement('canvas'); c.width = W; c.height = W;
   const ctx = c.getContext('2d'); ctx.textBaseline = 'top';
   const ok = await fontReady();
   const F = (wt, px) => { ctx.font = `${ok ? '' : wt} ${px}px ${FONT}`; };
   ctx.fillStyle = '#f5f1e6'; ctx.fillRect(0, 0, W, W);
-  ctx.fillStyle = COL.ink; ctx.fillRect(0, 0, W, 130);
-  ctx.fillStyle = '#ffc93c'; ctx.beginPath(); ctx.moveTo(52, 34); ctx.lineTo(94, 34); ctx.lineTo(112, 96); ctx.lineTo(34, 96); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#fff'; F(800, 44); ctx.fillText('사다리꼴 건축가', 134, 24);
-  ctx.fillStyle = '#ffd96b'; F(700, 26); ctx.fillText(`오늘의 결과물 · ⭐ 배지 ${starCount}/${starTotal}`, 136, 80);
+
+  /* 머리 */
+  ctx.fillStyle = COL.ink; ctx.fillRect(0, 0, W, 104);
+  ctx.fillStyle = '#ffc93c'; ctx.beginPath(); ctx.moveTo(50, 28); ctx.lineTo(88, 28); ctx.lineTo(104, 84); ctx.lineTo(34, 84); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#fff'; F(800, 40); ctx.fillText('사다리꼴 건축가', 124, 18);
+  ctx.fillStyle = '#ffd96b'; F(700, 24); ctx.fillText('오늘의 결과물', 126, 68);
   const d = new Date(); ctx.textAlign = 'right'; ctx.fillStyle = '#c9d0e0'; F(500, 24);
-  ctx.fillText(`${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`, W - 40, 84); ctx.textAlign = 'left';
+  ctx.fillText(`${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`, W - 40, 70); ctx.textAlign = 'left';
+
+  /* 칭호 + 받은 배지 */
+  const rank = rankTitle(earned.length), got = STARS.filter(s => earned.includes(s.id));
+  rr(ctx, 40, 118, W - 80, 128, 20);
+  const g = ctx.createLinearGradient(40, 118, W - 40, 246); g.addColorStop(0, '#fff6d6'); g.addColorStop(1, '#ffe9a8');
+  ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#e0b84a'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = COL.ink; F(800, 30); ctx.fillText(`${rank.icon} ${rank.title}`, 62, 132);
+  ctx.textAlign = 'right'; F(700, 24); ctx.fillStyle = '#7a4d00'; ctx.fillText(`⭐ 배지 ${earned.length} / ${STARS.length}`, W - 62, 136); ctx.textAlign = 'left';
+  F(600, 19);
+  if (!got.length) { ctx.fillStyle = '#9aa3b5'; ctx.fillText('(아직 받은 배지가 없어요)', 62, 184); }
+  let cx = 62, cy = 176;
+  got.forEach(s => {
+    const label = `${s.icon} ${s.title}`, w = ctx.measureText(label).width + 24;
+    if (cx + w > W - 62) { cx = 62; cy += 34; }
+    rr(ctx, cx, cy, w, 28, 14); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#e0b84a'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = COL.ink; ctx.fillText(label, cx + 12, cy + 4);
+    cx += w + 8;
+  });
 
   const panel = (x, y, w, h, title, bg = '#fffdf7') => {
     rr(ctx, x, y, w, h, 20); ctx.fillStyle = bg; ctx.fill(); ctx.strokeStyle = '#d8d0ba'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = COL.ink; F(800, 23); ctx.fillText(fitLine(ctx, title, w - 32), x + 16, y + 15);
+    ctx.fillStyle = COL.ink; F(800, 22); ctx.fillText(fitLine(ctx, title, w - 32), x + 16, y + 13);
   };
   const textPanel = (x, y, w, h, title, text, bg) => {
     panel(x, y, w, h, title, bg);
-    F(500, 22); const lh = 30, max = Math.max(1, Math.floor((h - 50) / lh));
+    F(500, 20); const lh = 27, max = Math.max(1, Math.floor((h - 48) / lh));
     let lines = wrapText(ctx, text, w - 32);
     if (lines.length > max) { lines = lines.slice(0, max); lines[max - 1] = fitLine(ctx, lines[max - 1] + '…', w - 32); }
     ctx.fillStyle = (text || '').startsWith('(아직') ? '#9aa3b5' : COL.ink;
-    lines.forEach((l, i) => ctx.fillText(l, x + 16, y + 52 + i * lh));
+    lines.forEach((l, i) => ctx.fillText(l, x + 16, y + 46 + i * lh));
   };
 
-  const LX = 40, RX = 556, CW = 484;
-  panel(LX, 154, CW, 410, '🏠 ' + (state.design.name || '내 건물'));
+  const LX = 40, RX = 556, CW = 484, TOP = 260;
+  /* 내 건물 */
+  panel(LX, TOP, CW, 360, '🏠 ' + (state.design.name || '내 건물'));
   try {
-    const img = await designImage(state.design, 1200, 900); const iw = CW - 28, ih = iw * .75;
-    ctx.save(); rr(ctx, LX + 14, 196, iw, ih, 12); ctx.clip(); ctx.drawImage(img, LX + 14, 196, iw, ih); ctx.restore();
-  } catch (e) { F(500, 22); ctx.fillStyle = '#9aa3b5'; ctx.fillText('(그림을 불러오지 못했어요)', LX + 16, 230); }
+    const img = await designImage(state.design, 1200, 900); const ih = 300, iw = ih * 4 / 3, ix = LX + (CW - iw) / 2;
+    ctx.save(); rr(ctx, ix, TOP + 46, iw, ih, 12); ctx.clip(); ctx.drawImage(img, ix, TOP + 46, iw, ih); ctx.restore();
+  } catch (e) { F(500, 22); ctx.fillStyle = '#9aa3b5'; ctx.fillText('(그림을 불러오지 못했어요)', LX + 16, TOP + 70); }
 
-  const ms = MISSIONS.filter(m => state.a2.missions[m.id]).length;
-  panel(LX, 580, CW, 446, `📸 변신 기록   ·   🎯 미션 ${ms}/3`);
+  /* 변신 기록 */
+  const ms = MISSIONS.filter(m => state.a2.missions[m.id]).length, RY = TOP + 376;
+  panel(LX, RY, CW, 1026 - RY, `📸 변신 기록   ·   🎯 미션 ${ms}/3`);
   const recs = state.a2.records.length ? state.a2.records.slice(0, 6) : [state.a2.pts];
-  const gap = 10, size = (CW - 28 - gap * 2) / 3;
+  const gap = 10, size = 128, gx = LX + (CW - (size * 3 + gap * 2)) / 2;
   recs.forEach((p, i) => {
-    const x = LX + 14 + (i % 3) * (size + gap), y = 624 + Math.floor(i / 3) * (size + 38);
-    rr(ctx, x, y, size, size + 30, 14); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#e4ddc9'; ctx.lineWidth = 2; ctx.stroke();
+    const x = gx + (i % 3) * (size + gap), y = RY + 44 + Math.floor(i / 3) * (size + 36);
+    rr(ctx, x, y, size, size + 28, 14); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#e4ddc9'; ctx.lineWidth = 2; ctx.stroke();
     const an = analyze(p); if (an.valid) canvasQuad(ctx, p, x, y, size);
-    ctx.fillStyle = COL.ink; F(700, 19); ctx.textAlign = 'center';
+    ctx.fillStyle = COL.ink; F(700, 18); ctx.textAlign = 'center';
     ctx.fillText(an.valid ? `평행 ${an.count}쌍 ${an.trap ? '✅' : '❌'}` : '사각형 아님', x + size / 2, y + size + 2); ctx.textAlign = 'left';
   });
 
-  panel(RX, 154, CW, 232, '💬 디자인과 구조, 무엇이 더 중요할까?');
-  F(600, 21); ctx.fillStyle = '#55607a'; ctx.fillText('도입 때', RX + 16, 214);
-  F(800, 22); ctx.fillStyle = COL.ink; ctx.fillText(VOTE[state.intro.vote], RX + 100, 213);
-  F(800, 20); ctx.fillText('🎨 디자인', RX + 16, 254); ctx.textAlign = 'right'; ctx.fillText('구조 🏗️', RX + CW - 16, 254); ctx.textAlign = 'left';
-  const bx = RX + 30, bw = CW - 60; rr(ctx, bx, 288, bw, 14, 7); ctx.fillStyle = '#e1dccd'; ctx.fill();
+  /* 토론 */
+  const DY = TOP;
+  panel(RX, DY, CW, 212, '💬 디자인과 구조, 무엇이 더 중요할까?');
+  F(600, 20); ctx.fillStyle = '#55607a'; ctx.fillText('도입 때', RX + 16, DY + 54);
+  F(800, 21); ctx.fillStyle = COL.ink; ctx.fillText(VOTE[state.intro.vote], RX + 100, DY + 53);
+  F(800, 19); ctx.fillText('🎨 디자인', RX + 16, DY + 90); ctx.textAlign = 'right'; ctx.fillText('구조 🏗️', RX + CW - 16, DY + 90); ctx.textAlign = 'left';
+  const bx = RX + 30, bw = CW - 60; rr(ctx, bx, DY + 122, bw, 14, 7); ctx.fillStyle = '#e1dccd'; ctx.fill();
   const v = state.wrap.touched ? +state.wrap.slider : null;
-  if (v != null) { ctx.beginPath(); ctx.arc(bx + bw * v / 100, 295, 17, 0, 7); ctx.fillStyle = '#ffc93c'; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = COL.ink; ctx.stroke(); }
-  F(600, 21); ctx.fillStyle = '#55607a'; ctx.fillText('지금', RX + 16, 336);
-  F(800, 22); ctx.fillStyle = COL.ink; ctx.fillText(fitLine(ctx, state.wrap.touched ? WORD[sliderWord(v)] : '아직 정하지 않았어요', CW - 116), RX + 100, 335);
+  if (v != null) { ctx.beginPath(); ctx.arc(bx + bw * v / 100, DY + 129, 16, 0, 7); ctx.fillStyle = '#ffc93c'; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = COL.ink; ctx.stroke(); }
+  F(600, 20); ctx.fillStyle = '#55607a'; ctx.fillText('지금', RX + 16, DY + 166);
+  F(800, 21); ctx.fillStyle = COL.ink; ctx.fillText(fitLine(ctx, state.wrap.touched ? WORD[sliderWord(v)] : '아직 정하지 않았어요', CW - 116), RX + 100, DY + 165);
 
-  textPanel(RX, 400, CW, 150, '까닭', blankOr(state.wrap.reason));
-  textPanel(RX, 564, CW, 150, '💡 둘 다 살리는 아이디어', blankOr(state.wrap.idea), '#e6f5ec');
-  textPanel(RX, 728, CW, 144, '📐 모양이 바뀌어도 공통된 성질은?', blankOr(state.a2.opinion), '#fff6d6');
+  /* 글 4칸 */
+  const ty = DY + 226, th = (1026 - ty - 3 * 10) / 4;
   const right = MCQ.filter((m, i) => state.wrap.mcq[i] === m.a).length;
-  textPanel(RX, 886, CW, 140, `✏️ 한 줄 소감   ·   ✅ 배움 확인 ${right}/3`, blankOr(state.wrap.reflect));
+  [['까닭', state.wrap.reason, undefined], ['💡 둘 다 살리는 아이디어', state.wrap.idea, '#e6f5ec'],
+   ['📐 모양이 바뀌어도 공통된 성질은?', state.a2.opinion, '#fff6d6'], [`✏️ 한 줄 소감   ·   ✅ 배움 확인 ${right}/3`, state.wrap.reflect, undefined]]
+    .forEach(([t, txt, bg], i) => textPanel(RX, ty + i * (th + 10), CW, th, t, blankOr(txt), bg));
 
   ctx.fillStyle = '#8a92a6'; F(600, 19); ctx.textAlign = 'center';
-  ctx.fillText('사다리꼴: 평행한 변이 한 쌍이라도 있는 사각형', W / 2, 1046); ctx.textAlign = 'left';
+  ctx.fillText('사다리꼴: 평행한 변이 한 쌍이라도 있는 사각형', W / 2, 1044); ctx.textAlign = 'left';
   return new Promise(r => c.toBlob(r, 'image/png'));
 }

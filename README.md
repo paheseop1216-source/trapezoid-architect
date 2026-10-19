@@ -24,13 +24,17 @@ npm run build    # dist/ 폴더에 배포용 파일 생성
 src/
   lib/geo.js          도형 엔진 (평행 판정, 사각형 유효성)
   lib/data.js         수업 내용 데이터 (카드, 문제, 미션, 조각)
-  lib/stars.js        배지 조건
+  lib/parts.js        건물 조각 좌표 · 지진 시험 계산
+  lib/stars.js        배지 조건 · 칭호
   lib/store.jsx       상태 · localStorage 저장
   lib/exportImage.jsx PNG 저장
-  components/         공통 컴포넌트 (도형, 캐릭터, 대화창 등)
-  pages/              도입 · 활동1 · 활동2 · 정리
+  lib/sound.js        효과음 (기본 꺼짐)
+  components/         공통 컴포넌트 (도형, 캐릭터, 건물 캔버스, 대화창 등)
+  pages/              도입 · 활동1 · 활동2(변신 실험) · Design(건물 디자인) · 정리
 legacy/index.html     1차 버전 (단일 HTML 파일, 더블클릭 실행용)
 ```
+
+화면별 기능, 배지·칭호, 수정 기록 등 자세한 설명은 [사다리꼴건축가_웹앱정리.md](사다리꼴건축가_웹앱정리.md)를 보세요.
 
 ## 배포 (Vercel)
 GitHub 저장소를 Vercel에서 Import하면 Vite로 자동 인식돼요.

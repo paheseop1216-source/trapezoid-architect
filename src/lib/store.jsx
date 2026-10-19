@@ -7,13 +7,13 @@ export const KEY = 'trapezoid-architect-v1';
 
 export function defaultState() {
   return {
-    tab: 'intro', sub: { a1: 'a1:sort', a2: 'a2:morph' },
+    tab: 'intro', sub: { a1: 'a1:sort', a2: 'a2:morph', wrap: 'wrap:sum' },
     intro: { vote: '', reason: '' },
     a1: { stage: 1, g1: {}, g2: {}, criterion: '', found: {}, foundNone: {}, cur: 's5', ox: {}, sortDone: false },
     a2: { pts: RECT0.map(p => p.slice()), base: RECT0.map(p => p.slice()), records: [], opinion: '', missions: {} },
     design: {
-      parts: [{ id: 'p1', type: 'rect', cx: 400, cy: 405, w: 300, h: 270, color: '#f2d7a6', flip: false, rot: 0 }],
-      name: '', marked: {}, nextId: 2, scene: 'day', checkDone: false,
+      parts: [{ id: 'p1', type: 'rect', cx: 400, cy: 405, w: 300, h: 270, color: '#f2d7a6', flip: false, rot: 0, pattern: 'none' }],
+      name: '', intro: '', nextId: 2, scene: 'day', quake: null,
     },
     wrap: { slider: 50, touched: false, reason: '', idea: '', mcq: {}, reflect: '' },
   };

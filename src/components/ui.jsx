@@ -4,6 +4,7 @@ import { STARS } from '../lib/stars.js';
 import { TABS, PQ, MISSIONS } from '../lib/data.js';
 import { Mascot } from './Guide.jsx';
 import { Logo } from './Shapes.jsx';
+import { useSound } from '../lib/sound.js';
 
 const getPath = (o, path) => path.split('.').reduce((x, k) => x[k], o);
 const setPath = (o, path, v) => { const ks = path.split('.'); const last = ks.pop(); ks.reduce((x, k) => x[k], o)[last] = v; };
@@ -20,12 +21,43 @@ export function Feedback({ fb }) {
   return <div className={'feedback ' + fb.kind} role="status">{fb.text}</div>;
 }
 
-export const QCard = ({ children }) => <div className="qcard"><span className="qmark">?</span><div>{children}</div></div>;
+/* 효과음 켜기/끄기 (기본 꺼짐) */
+export function SoundToggle() {
+  const [on, toggle] = useSound();
+  return (
+    <button className={'chipbtn sound' + (on ? ' on' : '')} aria-pressed={on} onClick={toggle} title={on ? '효과음 끄기' : '효과음 켜기'}>
+      {on ? '🔊 소리 켜짐' : '🔇 소리 꺼짐'}
+    </button>
+  );
+}
 
+/* 옆 패널 안의 작은 탭 */
+export function SideTabs({ tabs, value, onChange }) {
+  return (
+    <div className="sidetabs" role="tablist">
+      {tabs.map(t => <button key={t.id} role="tab" aria-selected={value === t.id} onClick={() => onChange(t.id)}>{t.label}</button>)}
+    </div>
+  );
+}
+
+export const QCard =({ children }) => <div className="qcard"><span className="qmark">?</span><div>{children}</div></div>;
+
+/* 선생님 메모: 화면 왼쪽 아래 떠 있는 버튼 → 누르면 메모 창 (활동 공간을 차지하지 않아요) */
 export function TeacherMemo({ title, children }) {
   const { teacher } = useApp();
+  const [open, setOpen] = useState(false);
   if (!teacher) return null;
-  return <details className="tmemo"><summary>👩‍🏫 선생님 메모 — {title}</summary><div>{children}</div></details>;
+  return (
+    <>
+      <button className="tmemo-fab" onClick={() => setOpen(o => !o)} aria-expanded={open}>👩‍🏫 메모</button>
+      {open && (
+        <div className="tmemo-pop pop" role="dialog" aria-label={`선생님 메모 — ${title}`}>
+          <div className="dhead"><b>👩‍🏫 선생님 메모 — {title}</b><button className="btn ghost sm" onClick={() => setOpen(false)}>✕</button></div>
+          <div className="tmemo-body">{children}</div>
+        </div>
+      )}
+    </>
+  );
 }
 
 export function PageHead({ kicker, title, children }) {
@@ -50,7 +82,7 @@ export function AskDialog() {
   if (!askState) return null;
   const done = v => { askState.res(v); setAskState(null); };
   return (
-    <div className="overlay" onClick={e => e.target === e.currentTarget && done(false)}>
+    <div className="overlay ask" onClick={e => e.target === e.currentTarget && done(false)}>
       <div className="dialog pop" role="alertdialog" aria-modal="true" aria-labelledby="askMsg">
         <div className="aicon">↺</div>
         <p id="askMsg" className="dtitle">{askState.msg}</p>
@@ -117,13 +149,19 @@ export function Welcome({ onStart }) {
         <div className="whero">
           <svg viewBox="0 0 360 120" className="wcity" aria-hidden="true">
             <rect x="0" y="104" width="360" height="16" rx="4" fill="#cfe3b5" />
-            <rect x="20" y="40" width="54" height="64" fill="#d9cdb4" stroke="#1f2a44" strokeWidth="3" />
-            <polygon points="30,40 64,40 74,24 20,24" fill="#c8553d" stroke="#1f2a44" strokeWidth="3" strokeLinejoin="round" />
-            <polygon points="100,104 160,104 150,30 110,30" fill="#a6cf8f" stroke="#1f2a44" strokeWidth="3" strokeLinejoin="round" />
-            <polygon points="115,30 145,30 138,12 122,12" fill="#e8a33a" stroke="#1f2a44" strokeWidth="3" strokeLinejoin="round" />
-            <rect x="250" y="50" width="80" height="54" fill="#cde8ff" stroke="#1f2a44" strokeWidth="3" />
-            <polygon points="240,50 340,50 325,28 255,28" fill="#2a66d1" stroke="#1f2a44" strokeWidth="3" strokeLinejoin="round" />
-            <polygon points="275,104 305,104 300,84 280,84" fill="#8a5a3b" stroke="#1f2a44" strokeWidth="2" strokeLinejoin="round" />
+            <g className="rise" style={{ animationDelay: '.1s' }}>
+              <rect x="20" y="40" width="54" height="64" fill="#d9cdb4" stroke="#1f2a44" strokeWidth="3" />
+              <polygon points="30,40 64,40 74,24 20,24" fill="#c8553d" stroke="#1f2a44" strokeWidth="3" strokeLinejoin="round" />
+            </g>
+            <g className="rise" style={{ animationDelay: '.25s' }}>
+              <polygon points="100,104 160,104 150,30 110,30" fill="#a6cf8f" stroke="#1f2a44" strokeWidth="3" strokeLinejoin="round" />
+              <polygon points="115,30 145,30 138,12 122,12" fill="#e8a33a" stroke="#1f2a44" strokeWidth="3" strokeLinejoin="round" />
+            </g>
+            <g className="rise" style={{ animationDelay: '.4s' }}>
+              <rect x="250" y="50" width="80" height="54" fill="#cde8ff" stroke="#1f2a44" strokeWidth="3" />
+              <polygon points="240,50 340,50 325,28 255,28" fill="#2a66d1" stroke="#1f2a44" strokeWidth="3" strokeLinejoin="round" />
+              <polygon points="275,104 305,104 300,84 280,84" fill="#8a5a3b" stroke="#1f2a44" strokeWidth="2" strokeLinejoin="round" />
+            </g>
           </svg>
           <div className="wmascot"><Mascot size={96} /></div>
         </div>

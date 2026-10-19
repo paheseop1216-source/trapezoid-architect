@@ -21,8 +21,8 @@ export const STARS = [
     test: s => MISSIONS.every(m => s.a2.missions[m.id]) },
   { id: 'record', tab: 'a2', icon: '📸', title: '관찰 기록가', desc: '변신 기록 3개를 남기고 공통 성질을 썼어요',
     test: s => s.a2.records.length >= 3 && filled(s.a2.opinion) },
-  { id: 'design', tab: 'a2', icon: '🏗️', title: '꼬마 건축가', desc: '내 건물의 사다리꼴 조각을 모두 찾았어요',
-    test: s => !!s.design.checkDone },
+  { id: 'design', tab: 'a2', icon: '🏗️', title: '꼬마 건축가', desc: '조각 5개 이상으로 건물을 짓고 이름을 붙여 지진 시험을 했어요',
+    test: s => s.design.parts.length >= 5 && filled(s.design.name) && !!(s.design.quake && s.design.quake.tested) },
   { id: 'debate', tab: 'wrap', icon: '💬', title: '토론왕', desc: '내 생각 위치, 까닭, 아이디어를 썼어요',
     test: s => s.wrap.touched && filled(s.wrap.reason) && filled(s.wrap.idea) },
   { id: 'mcq', tab: 'wrap', icon: '🏆', title: '사다리꼴 마스터', desc: '배움 확인 3문제를 모두 맞혔어요',
@@ -30,3 +30,11 @@ export const STARS = [
 ];
 
 export const earnedIds = s => STARS.filter(st => st.test(s)).map(st => st.id);
+
+/* 모은 배지 개수에 따른 칭호 */
+export function rankTitle(n) {
+  if (n >= STARS.length) return { icon: '🏆', title: '사다리꼴 마스터 건축가' };
+  if (n >= 7) return { icon: '🥇', title: '으뜸 건축가' };
+  if (n >= 4) return { icon: '🔨', title: '쑥쑥 크는 건축가' };
+  return { icon: '🌱', title: '새싹 건축가' };
+}

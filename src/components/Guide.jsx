@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /* 안내 캐릭터 '사다리 박사' — 사다리꼴 몸에 안전모를 쓴 건축가 */
 export function Mascot({ mood = 'happy', size = 76 }) {
@@ -22,12 +22,19 @@ export function Mascot({ mood = 'happy', size = 76 }) {
   );
 }
 
-export default function Guide({ text }) {
+/* cheer 값이 바뀌면(미션·배지 성공) 박사가 깡충 뛰며 놀라요 */
+export default function Guide({ text, cheer }) {
   const [open, setOpen] = useState(true);
+  const [jump, setJump] = useState(false);
+  useEffect(() => {
+    if (!cheer) return;
+    setJump(true); const t = setTimeout(() => setJump(false), 1400);
+    return () => clearTimeout(t);
+  }, [cheer]);
   return (
-    <div className={'guide' + (open ? '' : ' closed')}>
+    <div className={'guide' + (open ? '' : ' closed') + (jump ? ' jump' : '')}>
       <button className="guide-avatar" onClick={() => setOpen(o => !o)} aria-label={open ? '사다리 박사 말 접기' : '사다리 박사 말 보기'}>
-        <Mascot size={64} />
+        <Mascot size={64} mood={jump ? 'wow' : 'happy'} />
       </button>
       {open && <div className="bubble" key={text}><b>사다리 박사</b><span>{text}</span></div>}
     </div>

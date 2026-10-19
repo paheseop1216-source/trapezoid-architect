@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../lib/store.jsx';
-import { Field, Feedback, QCard, TeacherMemo, PageHead } from '../components/ui.jsx';
+import { Field, Feedback, QCard, TeacherMemo, PageHead, SoundToggle } from '../components/ui.jsx';
+import { rumble, resultSound } from '../lib/sound.js';
 
 function Sky({ id }) {
   return (
@@ -9,6 +10,12 @@ function Sky({ id }) {
         <linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#bfe2fa" /><stop offset="1" stopColor="#eef8ff" /></linearGradient>
       </defs>
       <rect width="300" height="260" fill={`url(#${id})`} />
+      <g className="sun" transform="translate(262 34)">
+        <g className="rays" stroke="#ffc93c" strokeWidth="3" strokeLinecap="round">
+          {[0, 45, 90, 135, 180, 225, 270, 315].map(a => <line key={a} x1="0" y1="-20" x2="0" y2="-26" transform={`rotate(${a})`} />)}
+        </g>
+        <circle r="14" fill="#ffd23f" />
+      </g>
       <g fill="#fff" opacity=".9" className="cloud">
         <ellipse cx="50" cy="40" rx="26" ry="10" /><ellipse cx="68" cy="34" rx="16" ry="10" />
         <ellipse cx="250" cy="60" rx="22" ry="8" /><ellipse cx="236" cy="55" rx="12" ry="8" />
@@ -21,13 +28,13 @@ function Sky({ id }) {
 
 function RectBuilding() {
   return (
-    <svg viewBox="0 0 300 260" role="img" aria-label="직사각형으로만 된 건물 그림">
+    <svg className="fit-svg" viewBox="0 0 300 260" role="img" aria-label="직사각형으로만 된 건물 그림">
       <Sky id="sky1" />
       <rect x="80" y="40" width="140" height="196" fill="#d9cdb4" stroke="#1f2a44" strokeWidth="3" />
       <rect x="80" y="40" width="140" height="10" fill="#c4b698" stroke="#1f2a44" strokeWidth="3" />
       <g fill="#9fd3f0" stroke="#1f2a44" strokeWidth="2">
         {[0, 1, 2].map(r => [0, 1, 2].map(c => (r === 2 && c === 1) ? null :
-          <rect key={`${r}${c}`} x={96 + c * 39} y={62 + r * 44} width="30" height="30" />))}
+          <rect key={`${r}${c}`} className="win" style={{ animationDelay: `${(r * 3 + c) * .7}s` }} x={96 + c * 39} y={62 + r * 44} width="30" height="30" />))}
       </g>
       <rect x="132" y="186" width="36" height="50" fill="#8a5a3b" stroke="#1f2a44" strokeWidth="2" />
       <circle cx="161" cy="212" r="2.5" fill="#ffc93c" />
@@ -38,13 +45,14 @@ function RectBuilding() {
 
 function TrapBuilding() {
   return (
-    <svg viewBox="0 0 300 260" role="img" aria-label="사다리꼴 모양이 들어간 건물 그림">
+    <svg className="fit-svg" viewBox="0 0 300 260" role="img" aria-label="사다리꼴 모양이 들어간 건물 그림">
       <Sky id="sky2" />
       <polygon points="128,6 172,6 186,52 114,52" fill="#e8a33a" stroke="#1f2a44" strokeWidth="3" strokeLinejoin="round" />
       <polygon points="70,92 230,92 252,236 48,236" fill="#f2d7a6" stroke="#1f2a44" strokeWidth="3" strokeLinejoin="round" />
       <polygon points="96,52 204,52 236,92 64,92" fill="#c8553d" stroke="#1f2a44" strokeWidth="3" strokeLinejoin="round" />
       <g fill="#9fd3f0" stroke="#1f2a44" strokeWidth="2">
-        <polygon points="88,110 116,110 120,140 84,140" /><polygon points="136,110 164,110 168,140 132,140" /><polygon points="184,110 212,110 216,140 180,140" />
+        {['88,110 116,110 120,140 84,140', '136,110 164,110 168,140 132,140', '184,110 212,110 216,140 180,140'].map((p, i) =>
+          <polygon key={i} className="win" style={{ animationDelay: `${i * 1.1 + .4}s` }} points={p} />)}
       </g>
       <polygon points="112,176 188,176 176,192 124,192" fill="#2a66d1" stroke="#1f2a44" strokeWidth="2" />
       <rect x="132" y="192" width="36" height="34" fill="#8a5a3b" stroke="#1f2a44" strokeWidth="2" />
@@ -60,6 +68,7 @@ export default function Intro() {
 
   const doShake = () => {
     setFb(null); setShake(s => s + 1);
+    rumble(1.4); setTimeout(() => resultSound('fall'), 1350);   // 위가 넓은 탑이 넘어지는 순간 '쿵'
     setTimeout(() => setFb({ kind: 'good', text: '아래가 넓은 탑은 흔들려도 제자리로 돌아왔어요. 위가 넓은 탑은 넘어졌어요! 왜 그럴까요?' }), 1600);
   };
 
@@ -69,8 +78,8 @@ export default function Intro() {
         <section className="card">
           <PageHead kicker="도입 · 생각 열기" title="모든 건물은 직사각형이어야 할까?" />
           <div className="buildings">
-            <figure><RectBuilding /><figcaption><span className="chip">①</span> 직사각형으로만 지은 건물</figcaption></figure>
-            <figure><TrapBuilding /><figcaption><span className="chip">②</span> 사다리꼴이 들어간 건물</figcaption></figure>
+            <figure><div className="fitbox" style={{ '--ar': 300 / 260 }}><RectBuilding /></div><figcaption><span className="chip">①</span> 직사각형으로만 지은 건물</figcaption></figure>
+            <figure><div className="fitbox" style={{ '--ar': 300 / 260 }}><TrapBuilding /></div><figcaption><span className="chip">②</span> 사다리꼴이 들어간 건물</figcaption></figure>
           </div>
           <QCard>왜 직사각형으로 만들지 않고 사다리꼴 모양을 사용했을까?</QCard>
         </section>
@@ -113,6 +122,7 @@ export default function Intro() {
             <div className="tools">
               <button className="btn primary" onClick={doShake}>🌬️ 흔들기</button>
               <button className="btn ghost" onClick={() => { setShake(0); setFb(null); }}>제자리</button>
+              <SoundToggle />
             </div>
             <Feedback fb={fb} />
           </section>

@@ -101,9 +101,11 @@ function Sort({ goSub }) {
         </div>
         {st === 1 ? (
           <>
-            <label className="lbl" htmlFor="criterion">어떤 기준으로 나누었나요?</label>
-            <Field id="criterion" path="a1.criterion" maxLength={80} placeholder="예) 마주 보는 변이 나란한 것과 아닌 것" />
-            <div className="tools"><button className="btn primary" onClick={toStage2}>다음: 평행한 변으로 나누기 →</button></div>
+            <div className="inline-field">
+              <label className="lbl" htmlFor="criterion">어떤 기준으로 나누었나요?</label>
+              <Field id="criterion" path="a1.criterion" maxLength={80} placeholder="예) 마주 보는 변이 나란한 것과 아닌 것" />
+              <button className="btn primary" onClick={toStage2}>다음: 평행한 변으로 나누기 →</button>
+            </div>
           </>
         ) : (
           <div className="tools">
@@ -181,20 +183,23 @@ function Find() {
     <>
       <section className="card">
         <PageHead kicker="활동1 · 평행한 변 찾기" title="변 두 개를 차례로 눌러 보세요">마주 보는 두 변을 고르면 길게 늘여서 만나는지 보여 줘요.</PageHead>
-        <div className="strip-head"><span>카드를 골라요</span><span className="muted">✅ {doneCount} / {SHAPES.length}</span></div>
-        <div className="strip">
-          {SHAPES.map((x, i) => (
-            <ShapeCard key={x.id} sh={x} i={i} cls={state.a1.cur === x.id ? 'sel' : ''} onClick={() => choose(x.id)}
-              onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && choose(x.id)}>
-              {shapeDone(state, x) && <span className="done">✅</span>}
-            </ShapeCard>
-          ))}
-        </div>
         <div className="find-grid">
+          <div className="strip-col">
+            <div className="strip-head"><span>카드를 골라요</span><span className="muted">✅ {doneCount}/{SHAPES.length}</span></div>
+            <div className="strip">
+              {SHAPES.map((x, i) => (
+                <ShapeCard key={x.id} sh={x} i={i} cls={state.a1.cur === x.id ? 'sel' : ''} onClick={() => choose(x.id)}
+                  onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && choose(x.id)}>
+                  {shapeDone(state, x) && <span className="done">✅</span>}
+                </ShapeCard>
+              ))}
+            </div>
+          </div>
+          <div className="fitbox square">
           <svg className="bigview" viewBox={viewBox} aria-label={`${sh.tag} 카드 크게 보기`}>
             <g fill="#d6cfba">{dots}</g>
-            {found.map((pr, k) => pr.map(i => { const [a, b] = extendLine(P[i], P[(i + 1) % 4]); return <line key={`e${k}${i}`} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={k === 0 ? COL.o : COL.b} strokeWidth="3" strokeDasharray="10 8" opacity=".8" />; }))}
-            {temp && temp.map(i => { const [a, b] = extendLine(P[i], P[(i + 1) % 4]); return <line key={`t${i}`} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={COL.gray} strokeWidth="3" strokeDasharray="10 8" />; })}
+            {found.map((pr, k) => pr.map(i => { const [a, b] = extendLine(P[i], P[(i + 1) % 4]); return <line key={`e${k}${i}`} className="extend" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={k === 0 ? COL.o : COL.b} strokeWidth="3" strokeDasharray="10 8" opacity=".8" />; }))}
+            {temp && temp.map(i => { const [a, b] = extendLine(P[i], P[(i + 1) % 4]); return <line key={`t${i}`} className="extend" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={COL.gray} strokeWidth="3" strokeDasharray="10 8" />; })}
             {X && <circle className="meet" cx={X[0]} cy={X[1]} r="11" fill={COL.red} stroke="#fff" strokeWidth="3" />}
             <polygon points={pts(P)} fill="#fff3c4" />
             {[0, 1, 2, 3].map(i => {
@@ -214,7 +219,8 @@ function Find() {
                 <text x={q[0] + d[0] / L * 26} y={q[1] + d[1] / L * 26 + 8} textAnchor="middle" fontSize="24" fill={COL.ink}>{LABELS[i]}</text></g>;
             })}
           </svg>
-          <div className="stack">
+          </div>
+          <div className="stack side">
             <div className="stat"><span>찾은 평행한 변</span><span className="v">{found.length}쌍</span></div>
             <Feedback fb={fb} />
             <div className="tools">
