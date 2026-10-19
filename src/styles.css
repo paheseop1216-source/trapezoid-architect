@@ -251,7 +251,9 @@ label.lbl { display: block; margin: 14px 0 6px; }
 
 /* ---------- 변신 실험 ---------- */
 .morph { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 18px; }
-.board { background: #fff; border: 1px solid var(--line); border-radius: 18px; display: block; touch-action: none; user-select: none; -webkit-user-select: none;
+/* 아이패드 사파리는 SVG의 touch-action을 무시할 때가 있어서 감싼 상자(HTML)에도 걸어요 */
+.board-col .fitbox, .stage-frame { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.board { background: #fff; border: 1px solid var(--line); border-radius: 18px; display: block; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   width: min(100%, max(420px, calc((100dvh - 390px) * 660 / 460))); aspect-ratio: 660 / 460; margin: 0 auto; }
 .board .vtx circle:nth-child(2) { transition: r .15s; }
 .mission { display: flex; gap: 10px; align-items: flex-start; background: #fff; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 12px; margin-bottom: 8px; transition: all .3s var(--ease); }

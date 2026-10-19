@@ -5,42 +5,46 @@ import { MISSIONS, RECT0, GW, GH, CELL, LABELS, COL } from '../lib/data.js';
 import { ParallelMarks, QuadThumb, pts } from '../components/Shapes.jsx';
 import Design from './Design.jsx';
 import { Field, QCard, TeacherMemo, PageHead, Feedback, SideTabs } from '../components/ui.jsx';
+import { svgPoint, useTouchLock, capture } from '../lib/touch.js';
 
-function svgPoint(svg, e) {
-  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
-  return pt.matrixTransform(svg.getScreenCTM().inverse());
-}
 const isRect = p => { const a = analyze(p); return a.valid && (a.kind === '직사각형' || a.kind === '정사각형'); };
 
 /* ---------- ① 사다리꼴 변신 실험 ---------- */
 function Morph() {
   const { state, update, toast, celebrate } = useApp();
-  const [dragV, setDragV] = useState(-1);
+  const [dragV, setDragV] = useState(-1);           // 화면 표시용 (노란 꼭짓점)
+  const drag = useRef(null);                         // 실제 끌기 상태 — 바로 반영돼서 첫 움직임도 놓치지 않아요
   const [tab, setTab] = useState('mission');
   const svgRef = useRef(null);
+  useTouchLock(svgRef);
   const p = state.a2.pts, an = analyze(p);
 
   const onDown = e => {
     const svg = svgRef.current, pt = svgPoint(svg, e);
-    let i = -1, best = 40;
+    /* 손가락은 마우스보다 덜 정확해서 잡히는 범위를 넓혀요 (한 칸 = 50) */
+    let i = -1, best = e.pointerType === 'mouse' ? 40 : 70;
     p.forEach((q, k) => { const d = Math.hypot(q[0] * CELL - pt.x, q[1] * CELL - pt.y); if (d < best) { best = d; i = k; } });
     if (i < 0) return;
-    setDragV(i); svg.setPointerCapture(e.pointerId); e.preventDefault();
+    e.preventDefault();
+    drag.current = { i, id: e.pointerId, last: p[i] };
+    setDragV(i); capture(svg, e);
   };
   const onMove = e => {
-    if (dragV < 0) return;
+    const dr = drag.current; if (!dr || e.pointerId !== dr.id) return;
+    e.preventDefault();
     const pt = svgPoint(svgRef.current, e);
     const x = Math.max(0, Math.min(GW, Math.round(pt.x / CELL))), y = Math.max(0, Math.min(GH, Math.round(pt.y / CELL)));
-    const q = p[dragV];
-    if (q[0] !== x || q[1] !== y) update(d => { d.a2.pts[dragV] = [x, y]; });
+    if (dr.last[0] !== x || dr.last[1] !== y) { dr.last = [x, y]; update(d => { d.a2.pts[dr.i] = [x, y]; }); }
   };
-  const onUp = () => {
-    if (dragV < 0) return; setDragV(-1);
-    const a = analyze(p), m = state.a2.missions, got = {};
+  const onUp = e => {
+    const dr = drag.current; if (!dr || (e && e.pointerId !== dr.id)) return;
+    drag.current = null; setDragV(-1);
+    const now = p.map((q, k) => (k === dr.i ? dr.last : q));
+    const a = analyze(now), m = state.a2.missions, got = {};
     if (a.valid) {
-      const moved = p.filter((q, i) => q[0] !== state.a2.base[i][0] || q[1] !== state.a2.base[i][1]).length;
+      const moved = now.filter((q, i) => q[0] !== state.a2.base[i][0] || q[1] !== state.a2.base[i][1]).length;
       if (moved === 1 && a.trap && isRect(state.a2.base) && !m.m1) got.m1 = true;
-      if (a.count === 2 && !isRect(p) && !m.m2) got.m2 = true;
+      if (a.count === 2 && !isRect(now) && !m.m2) got.m2 = true;
       if (a.count === 0 && !m.m3) got.m3 = true;
     }
     if (Object.keys(got).length) { update(d => Object.assign(d.a2.missions, got)); toast('🎯 미션 성공!'); celebrate(); }

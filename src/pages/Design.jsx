@@ -9,11 +9,7 @@ import { Field, TeacherMemo, PageHead, SideTabs, SoundToggle } from '../componen
 import { rumble, resultSound } from '../lib/sound.js';
 import { designPng, downloadBlob, fileName } from '../lib/exportImage.jsx';
 
-function svgPoint(svg, e) {
-  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
-  return pt.matrixTransform(svg.getScreenCTM().inverse());
-}
-
+import { svgPoint, useTouchLock, capture } from '../lib/touch.js';
 function PaletteIcon({ d }) {
   const sc = Math.min(100 / d.w, 64 / d.h);
   const P = d.u.map(([u, v]) => [50 + (u / 20 - .5) * d.w * sc, 35 + (v / 20 - .5) * d.h * sc]);
@@ -52,6 +48,7 @@ export default function Design() {
   const [result, setResult] = useState(null);    // 흔들기가 끝난 뒤 보여 줄 결과
   const [, setTick] = useState(0);
   const svgRef = useRef(null);
+  useTouchLock(svgRef);
   const drag = useRef(null);
   const hist = useRef({ past: [], future: [] });
   const sel = D.parts.find(p => p.id === selId);
@@ -88,20 +85,28 @@ export default function Design() {
     });
   };
 
+  /* 끌기: 마우스·손가락·펜 모두 (아이패드 사파리 대응: 좌표 직접 계산 + 터치 스크롤 막기) */
   const onDown = e => {
     if (busy) return;
-    const pt = svgPoint(svgRef.current, e);
-    if (e.target.dataset.resize && sel) { drag.current = { mode: 'resize', id: selId, started: false }; svgRef.current.setPointerCapture(e.pointerId); e.preventDefault(); return; }
-    const id = e.target.dataset && e.target.dataset.id;
+    const svg = svgRef.current, pt = svgPoint(svg, e), t = e.target;
+    if (t.getAttribute('data-resize') && sel) {
+      e.preventDefault(); drag.current = { mode: 'resize', id: selId, pid: e.pointerId, started: false, sx: pt.x, sy: pt.y }; capture(svg, e); return;
+    }
+    const id = t.getAttribute('data-id');
     if (!id) { setSelId(null); return; }
     const p = D.parts.find(x => x.id === id);
-    setSelId(id); drag.current = { mode: 'move', off: [p.cx - pt.x, p.cy - pt.y], id, started: false };
-    svgRef.current.setPointerCapture(e.pointerId); e.preventDefault();
+    e.preventDefault();
+    setSelId(id); drag.current = { mode: 'move', off: [p.cx - pt.x, p.cy - pt.y], id, pid: e.pointerId, started: false, sx: pt.x, sy: pt.y };
+    capture(svg, e);
   };
   const onMove = e => {
-    const dr = drag.current; if (!dr) return;
-    if (!dr.started) { dr.started = true; snapshot(); setResult(null); }
+    const dr = drag.current; if (!dr || e.pointerId !== dr.pid) return;
+    e.preventDefault();
     const pt = svgPoint(svgRef.current, e);
+    if (!dr.started) {
+      if (Math.hypot(pt.x - dr.sx, pt.y - dr.sy) < 4) return;   // 손가락 떨림은 무시 (누르기만 한 것)
+      dr.started = true; snapshot(); setResult(null);
+    }
     update(s => {
       const p = s.design.parts.find(x => x.id === dr.id); if (!p) return;
       if (dr.mode === 'move') {
@@ -114,7 +119,7 @@ export default function Design() {
       }
     });
   };
-  const onUp = () => { drag.current = null; };
+  const onUp = e => { const dr = drag.current; if (dr && e && e.pointerId !== dr.pid) return; drag.current = null; };
 
   /* 키보드: 화살표로 조금씩 옮기기, Delete로 지우기, Ctrl+Z / Ctrl+Y */
   const keyRef = useRef(); keyRef.current = { act, undo, redo, sel, edit };
