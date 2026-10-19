@@ -31,14 +31,20 @@ function Summary() {
             const ans = state.wrap.mcq[i];
             return (
               <div key={i} className="mcq">
-                <b>{m.q}</b>
-                <div className="opts">
+                {/* 문제: 번호 동그라미 + 크고 진한 글씨 / 보기: 작고 연한 글씨 버튼 */}
+                <div className="mcq-q" id={`mcq-q${i}`}>
+                  <span className="qnum">{i + 1}</span>
+                  <span className="qtext">{m.q.replace(/^\d+\.\s*/, '')}</span>
+                  {ans != null && <span className={'qmark-res ' + (ans === m.a ? 'ok' : 'no')}>{ans === m.a ? '⭕ 맞았어요' : '다시 살펴볼까요?'}</span>}
+                </div>
+                <div className="opts" role="group" aria-labelledby={`mcq-q${i}`}>
                   {m.o.map((t, j) => (
                     <button key={j} aria-pressed={ans === j} className={ans === j ? (j === m.a ? 'ok' : 'no') : ''}
-                      onClick={() => update(d => { d.wrap.mcq[i] = j; })}>{'①②③'[j]} {t}{ans === j && (j === m.a ? ' ⭕' : '')}</button>
+                      onClick={() => update(d => { d.wrap.mcq[i] = j; })}>
+                      <span className="opt-n">{j + 1}</span><span className="opt-t">{t}</span>{ans === j && j === m.a && <span className="opt-ok">⭕</span>}
+                    </button>
                   ))}
                 </div>
-                {ans != null && ans !== m.a && <div className="feedback hint">다시 살펴볼까요? 왼쪽 정리 카드를 한 번 더 읽어 보세요.</div>}
               </div>
             );
           })}

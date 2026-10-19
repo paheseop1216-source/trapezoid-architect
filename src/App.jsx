@@ -83,7 +83,7 @@ export default function App() {
       <div className="shell">
       <header className="appbar">
         <div className="hbar">
-          <button className="brand" onClick={() => goTab('intro')} aria-label="사다리꼴 건축가 — 도입으로 가기">
+          <button className="brand" onClick={() => setWelcome(true)} aria-label="사다리꼴 건축가 — 시작 화면 보기">
             <Logo size={40} />
             <span className="brand-name" aria-hidden="true">{[...'사다리꼴 건축가'].map((ch, k) => <i key={k} style={{ '--k': k }}>{ch === ' ' ? ' ' : ch}</i>)}</span>
           </button>

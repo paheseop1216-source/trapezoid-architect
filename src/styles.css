@@ -307,12 +307,25 @@ label.lbl { display: block; margin: 14px 0 6px; }
 .compare { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: #fff; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 12px; }
 .compare .bx { padding: 6px 14px; border-radius: 12px; background: var(--paper); }
 .compare .cmsg { color: var(--green); }
-.mcq { margin: 14px 0; }
-.mcq .opts { display: grid; gap: 8px; margin-top: 6px; }
-.mcq .opts button { text-align: left; min-height: 52px; padding: 8px 14px; border-radius: 14px; border: 2px solid var(--line); background: #fff; transition: all .15s; }
-.mcq .opts button:hover { border-color: var(--line2); background: var(--paper); }
+/* 배움 확인: 문제(크고 진하게) / 보기(작고 연하게) 구분 */
+.mcq { margin: 14px 0; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 10px 12px 12px; box-shadow: var(--sh-1); }
+.mcq-q { display: flex; align-items: center; gap: 10px; font-size: 1.08em; color: var(--ink); line-height: 1.35; padding-bottom: 8px; border-bottom: 2px dashed var(--line); }
+.qnum { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--blue); color: #fff; font-size: .9em; box-shadow: 0 2px 0 #1d4c9e; }
+.mcq .opts { display: grid; gap: 6px; margin-top: 8px; padding-left: 40px; }
+.mcq .opts button { display: flex; align-items: center; gap: 10px; text-align: left; min-height: 48px; padding: 6px 12px; border-radius: 12px; border: 2px solid transparent; background: var(--paper); color: var(--ink2); font-size: .92em; transition: all .15s; }
+.opt-n { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #c9bfa6; background: #fff; color: var(--ink2); font-size: .8em; }
+.opt-t { flex: 1; }
+.opt-ok { flex: none; }
+.mcq .opts button:hover { border-color: var(--line2); background: #fff; color: var(--ink); }
+.mcq .opts button[aria-pressed='true'] { color: var(--ink); }
 .mcq .opts button.ok { border-color: var(--green); background: var(--green-l); }
+.mcq .opts button.ok .opt-n { background: var(--green); border-color: var(--green); color: #fff; }
 .mcq .opts button.no { border-color: #e9b45a; background: #fff6e2; }
+.mcq .opts button.no .opt-n { background: #e9b45a; border-color: #e9b45a; color: #fff; }
+.qtext { flex: 1; }
+.qmark-res { flex: none; font-size: .72em; padding: 2px 10px; border-radius: 999px; animation: pop .3s var(--ease); }
+.qmark-res.ok { background: var(--green-l); color: #14583a; }
+.qmark-res.no { background: #fff1d6; color: #7a4d00; }
 .finale { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: linear-gradient(135deg, #1f2a44, #34436b); color: #fff; border: 0; }
 .rank { display: flex; align-items: center; gap: 14px; }
 .rank-icon { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; font-size: 2.2em; background: radial-gradient(circle at 35% 30%, #fff6c9, var(--sun)); border: 3px solid #d9a400; animation: spin 1s var(--ease); }
@@ -652,9 +665,11 @@ label.lbl { display: block; margin: 14px 0 6px; }
   .sum { padding: 8px 14px; }
   .wrap-grid .sumcards { gap: 8px; }
   .sum p { margin: 2px 0 0; font-size: .92em; }
-  .mcq { margin: 8px 0; }
-  .mcq .opts { gap: 5px; }
-  .mcq .opts button { min-height: 44px; padding: 5px 12px; }
+  .mcq { margin: 8px 0; padding: 8px 10px 10px; }
+  .mcq-q { padding-bottom: 6px; }
+  .mcq .opts { gap: 6px; margin-top: 6px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .wrap-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); }
+  .mcq .opts button { min-height: 44px; padding: 4px 12px; }
   .finale { margin: 14px 0; padding: 16px 20px; border-radius: 18px; }
 }
 /* 세로 태블릿(10.4인치 세로 800×1334): 그림판은 위, 패널은 아래 */
@@ -689,7 +704,9 @@ label.lbl { display: block; margin: 14px 0 6px; }
   body { font-size: 17px; }
   .btn { min-height: 44px; }
   .step .st-txt small { display: none; }
-  .sum p, .mcq .opts button { font-size: .88em; }
+  .sum p { font-size: .88em; }
+  .mcq .opts button { font-size: .86em; }
+  .mcq-q { font-size: 1em; }
   .sum-ic { display: none; }
   .mcq { margin: 6px 0; }
   .strip .shape { height: 84px; } .strip .shape svg { height: 58px; }
