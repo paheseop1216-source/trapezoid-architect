@@ -231,9 +231,14 @@ label.lbl { display: block; margin: 14px 0 6px; }
 .stat .v { font-size: 1.25em; }
 .stat.big.yes { background: var(--green-l); border-color: var(--green); }
 .stat.big.no { background: #f1f3f7; }
-.pills { display: flex; gap: 6px; }
-.pill { padding: 2px 12px; border-radius: 999px; border: 2px solid var(--line); color: var(--ink2); font-size: .85em; transition: all .2s var(--ease); }
-.pill.on { background: var(--ink); color: #fff; border-color: var(--ink); transform: scale(1.08); }
+/* 평행한 변 0·1·2쌍: 버튼이 아니라 '표시등'이에요 (누르는 게 아니라 저절로 켜져요) */
+.pills { display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--paper); pointer-events: none; }
+.pill { padding: 1px 10px; border-radius: 7px; color: #b5ae9a; font-size: .85em; transition: all .2s var(--ease); }
+.pill.on { background: var(--ink); color: #fff; box-shadow: 0 0 0 2px var(--sun); }
+.pick-hint { color: #b26b00; }
+/* 변신 실험 안내 줄: 문구가 바뀌어도 높이가 같아서 점판이 움직이지 않아요 */
+.morph-help { min-height: 2.9em; display: flex; align-items: flex-start; }
+.pick-ring { animation: spinSlow 3s linear infinite; transform-box: fill-box; transform-origin: center; }
 
 .quiz { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
 .qitem { background: #fff; border: 2px solid var(--line); border-radius: 18px; padding: 10px; text-align: center; transition: border-color .2s, transform .2s; }
@@ -591,11 +596,15 @@ label.lbl { display: block; margin: 14px 0 6px; }
   .towers svg { height: 100%; width: auto; max-width: 46%; max-height: none; }
 
   /* 사각형 나누기 */
-  .shape { width: 92px; height: 106px; } .shape svg { height: 76px; }
+  /* 카드 크기는 화면 크기에 맞춰 커져요 (카드 10장이 한 줄에 들어가는 만큼, 최대 160px) */
+  .page { --cs: clamp(88px, min(8.6vw, 15dvh), 150px); }
+  .shape { width: var(--cs); height: calc(var(--cs) * 1.16); } .shape svg { height: calc(var(--cs) * .84); }
+  .shape .tag { font-size: calc(var(--cs) * .14); }
   .pool { min-height: 0; padding: 8px; flex: none; }
   .bins { flex: 1; min-height: 150px; margin-top: 8px; }
   .bin { min-height: 0; overflow: auto; padding: 8px 10px; }
-  .bin .cards .shape { width: 80px; height: 94px; } .bin .cards .shape svg { height: 64px; }
+  .bin .cards .shape { width: var(--cs); height: calc(var(--cs) * 1.16); } .bin .cards .shape svg { height: calc(var(--cs) * .84); }
+  .bin.many .cards { --cs: clamp(76px, calc(min(8.6vw, 15dvh) * .76), 122px); }   /* 한 상자에 카드가 5장 넘으면 조금 작게 */
   .inline-field { flex: none; }
   .stage-tag { top: 12px; right: 14px; }
 
@@ -611,7 +620,7 @@ label.lbl { display: block; margin: 14px 0 6px; }
 
   /* 확인 문제 */
   .quiz { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .qitem svg { height: 100px; }
+  .qitem svg { height: clamp(100px, min(14vw, 28dvh), 220px); }
 
   /* 변신 실험 */
   .morph { flex: 1; min-height: 0; grid-template-columns: minmax(0, 1fr) 330px; gap: 14px; }
@@ -686,6 +695,23 @@ label.lbl { display: block; margin: 14px 0 6px; }
   .strip .shape { height: 84px; } .strip .shape svg { height: 58px; }
 }
 
+/* ---------- 오래된 브라우저 대비 (iPadOS 15 이하 사파리 등) ---------- */
+@supports not (height: 100dvh) {
+  @media (min-width: 1000px) and (orientation: landscape), (min-width: 700px) and (orientation: portrait) and (min-height: 1000px) {
+    .shell { height: calc(100vh / var(--zoom)); }
+  }
+}
+@supports not (container-type: size) {
+  .fitbox > svg.board, .fitbox > svg.stage, .fitbox > svg.bigview, .fitbox > svg.fit-svg { width: 100%; height: auto; max-height: 100%; }
+}
+
+/* 점검 화면 (?debug=1) */
+.dbg { position: fixed; right: 8px; bottom: 8px; z-index: 300; width: min(340px, calc(100vw - 16px)); max-height: 70vh; overflow: auto; background: rgba(20, 26, 40, .92); color: #fff; border-radius: 12px; padding: 8px 10px; font: 12px/1.4 ui-monospace, Menlo, monospace; }
+.dbg button { width: 100%; min-height: 32px; border: 0; border-radius: 8px; background: var(--sun); color: var(--ink); font: inherit; margin-bottom: 6px; }
+.dbg table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+.dbg th { text-align: left; color: #c9d0e0; font-weight: normal; padding-right: 8px; white-space: nowrap; }
+.dbg-log div { border-top: 1px solid rgba(255, 255, 255, .12); padding: 2px 0; word-break: break-all; }
+
 /* ---------- 반응형 ---------- */
 @media (min-width: 1000px) and (max-height: 900px) {
   .card { padding: 14px 18px; margin-bottom: 12px; }
@@ -722,8 +748,13 @@ label.lbl { display: block; margin: 14px 0 6px; }
 @media (max-width: 620px) {
   body { font-size: 18px; }
   .bins, .buildings, .morph { grid-template-columns: 1fr; }
-  .step .st-txt { display: none; }
-  .step .st-dots { left: 6px; bottom: -2px; }
+  /* 휴대폰: 단계 이름이 보이도록 탭을 작게 */
+  .stepper { gap: 2px; }
+  .step { column-gap: 5px; row-gap: 3px; padding: 4px 6px 4px 4px; min-height: 44px; }
+  .step .n { width: 28px; height: 28px; border-radius: 9px; font-size: .85em; }
+  .step .st-txt b { font-size: .85em; white-space: nowrap; }
+  .step .st-dots { gap: 4px; }
+  .step .st-dots i { width: 6px; height: 6px; }
   .shape { width: 96px; height: 112px; } .shape svg { height: 80px; }
   .wsum ul { columns: 1; }
   .colors { grid-template-columns: repeat(6, 44px); }

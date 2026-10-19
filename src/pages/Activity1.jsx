@@ -93,7 +93,7 @@ function Sort({ goSub }) {
         </div>
         <div className="bins">
           {bins.map(b => (
-            <div key={b.k} className={`bin ${b.k}` + (over === b.k ? ' over' : '')} data-bin={b.k} onClick={e => clickBin(b.k, e)}>
+            <div key={b.k} className={`bin ${b.k}` + (over === b.k ? ' over' : '') + (cardsIn(b.k).length > 4 ? ' many' : '')} data-bin={b.k} onClick={e => clickBin(b.k, e)}>
               <h3>{b.t} <span className="muted">({cardsIn(b.k).length}장)</span></h3>
               <div className="cards">{cardsIn(b.k).map(renderCard)}</div>
             </div>

@@ -19,27 +19,13 @@ function Morph() {
   useTouchLock(svgRef);
   const p = state.a2.pts, an = analyze(p);
 
-  const onDown = e => {
-    const svg = svgRef.current, pt = svgPoint(svg, e);
-    /* 손가락은 마우스보다 덜 정확해서 잡히는 범위를 넓혀요 (한 칸 = 50) */
-    let i = -1, best = e.pointerType === 'mouse' ? 40 : 70;
-    p.forEach((q, k) => { const d = Math.hypot(q[0] * CELL - pt.x, q[1] * CELL - pt.y); if (d < best) { best = d; i = k; } });
-    if (i < 0) return;
-    e.preventDefault();
-    drag.current = { i, id: e.pointerId, last: p[i] };
-    setDragV(i); capture(svg, e);
-  };
-  const onMove = e => {
-    const dr = drag.current; if (!dr || e.pointerId !== dr.id) return;
-    e.preventDefault();
-    const pt = svgPoint(svgRef.current, e);
-    const x = Math.max(0, Math.min(GW, Math.round(pt.x / CELL))), y = Math.max(0, Math.min(GH, Math.round(pt.y / CELL)));
-    if (dr.last[0] !== x || dr.last[1] !== y) { dr.last = [x, y]; update(d => { d.a2.pts[dr.i] = [x, y]; }); }
-  };
-  const onUp = e => {
-    const dr = drag.current; if (!dr || (e && e.pointerId !== dr.id)) return;
-    drag.current = null; setDragV(-1);
-    const now = p.map((q, k) => (k === dr.i ? dr.last : q));
+  /* 꼭짓점 옮기는 두 가지 방법 (마우스·손가락·펜 모두)
+     ① 끌기: 꼭짓점을 누른 채 끌어요
+     ② 콕콕: 꼭짓점을 톡 누르면 노랗게 고르고 → 옮길 모눈 점을 톡 누르면 그리로 가요
+     꼭짓점은 좌표 계산 없이 '누른 그림'으로 바로 찾아서, 기기마다 좌표가 어긋나도 잡혀요. */
+  const [selV, setSelV] = useState(-1);
+  const toGrid = pt => [Math.max(0, Math.min(GW, Math.round(pt.x / CELL))), Math.max(0, Math.min(GH, Math.round(pt.y / CELL)))];
+  const checkMissions = now => {
     const a = analyze(now), m = state.a2.missions, got = {};
     if (a.valid) {
       const moved = now.filter((q, i) => q[0] !== state.a2.base[i][0] || q[1] !== state.a2.base[i][1]).length;
@@ -48,6 +34,40 @@ function Morph() {
       if (a.count === 0 && !m.m3) got.m3 = true;
     }
     if (Object.keys(got).length) { update(d => Object.assign(d.a2.missions, got)); toast('🎯 미션 성공!'); celebrate(); }
+  };
+  const onDown = e => {
+    const svg = svgRef.current, pt = svgPoint(svg, e);
+    const hit = e.target.closest && e.target.closest('[data-v]');
+    let i = hit ? +hit.getAttribute('data-v') : -1;
+    if (i < 0) {   /* 꼭짓점 근처를 눌렀을 때 (손가락은 범위를 넓게, 한 칸 = 50) */
+      let best = e.pointerType === 'mouse' ? 40 : 60;
+      p.forEach((q, k) => { const d = Math.hypot(q[0] * CELL - pt.x, q[1] * CELL - pt.y); if (d < best) { best = d; i = k; } });
+    }
+    e.preventDefault();
+    if (i < 0) {   /* 빈 곳: 골라 둔 꼭짓점이 있으면 그 점으로 옮겨요 */
+      if (selV >= 0) {
+        const g = toGrid(pt);
+        update(d => { d.a2.pts[selV] = g; });
+        checkMissions(p.map((q, k) => (k === selV ? g : q)));
+        setSelV(-1);
+      }
+      return;
+    }
+    drag.current = { i, id: e.pointerId, last: p[i], moved: false };
+    setDragV(i); capture(svg, e);
+  };
+  const onMove = e => {
+    const dr = drag.current; if (!dr || e.pointerId !== dr.id) return;
+    e.preventDefault();
+    const [x, y] = toGrid(svgPoint(svgRef.current, e));
+    if (dr.last[0] !== x || dr.last[1] !== y) { dr.last = [x, y]; dr.moved = true; update(d => { d.a2.pts[dr.i] = [x, y]; }); }
+  };
+  const onUp = e => {
+    const dr = drag.current; if (!dr || (e && e.pointerId !== dr.id)) return;
+    drag.current = null; setDragV(-1);
+    if (!dr.moved) { if (e && e.type === 'pointerup') setSelV(s => (s === dr.i ? -1 : dr.i)); return; }   // 톡 누르기 = 고르기
+    setSelV(-1);
+    checkMissions(p.map((q, k) => (k === dr.i ? dr.last : q)));
   };
   const record = () => {
     if (!an.valid) return toast('사각형이 아닌 모양은 기록할 수 없어요.');
@@ -74,7 +94,11 @@ function Morph() {
   return (
     <>
       <section className="card fit">
-        <PageHead kicker="활동2 · 사다리꼴 변신 실험" title="꼭짓점을 끌어서 모양을 바꿔 보세요" />
+        <PageHead kicker="활동2 · 사다리꼴 변신 실험" title="꼭짓점을 끌어서 모양을 바꿔 보세요">
+          <span className="morph-help">{selV >= 0
+            ? <span className="pick-hint">👆 꼭짓점 {LABELS[selV]}을(를) 골랐어요. 옮길 모눈 점을 눌러요. (다시 누르면 취소)</span>
+            : '꼭짓점을 끌거나, 꼭짓점을 톡 누른 뒤 옮길 모눈 점을 톡 눌러도 돼요.'}</span>
+        </PageHead>
         <div className="morph">
           <div className="board-col">
             <div className="fitbox" style={{ '--ar': 660 / 460 }}>
@@ -88,10 +112,11 @@ function Morph() {
                 {P.map((q, i) => {
                   const d = [q[0] - cx, q[1] - cy], L = Math.hypot(...d) || 1;
                   return (
-                    <g key={i} className="vtx" style={{ cursor: 'grab' }}>
-                      <circle cx={q[0]} cy={q[1]} r="30" fill="transparent" />
+                    <g key={i} className={'vtx' + (selV === i ? ' picked' : '')} data-v={i} style={{ cursor: 'grab' }}>
+                      <circle cx={q[0]} cy={q[1]} r="34" fill="#fff" fillOpacity="0.001" />
                       {dragV === i && <circle key={`${q[0]}-${q[1]}`} className="snap-ring" cx={q[0]} cy={q[1]} r="18" fill="none" stroke="#ffc93c" strokeWidth="4" />}
-                      <circle cx={q[0]} cy={q[1]} r={dragV === i ? 18 : 14} fill={dragV === i ? '#ffc93c' : '#fff'} stroke={COL.ink} strokeWidth="4" />
+                      {selV === i && <circle className="pick-ring" cx={q[0]} cy={q[1]} r="24" fill="none" stroke="#ffb000" strokeWidth="4" strokeDasharray="6 5" pointerEvents="none" />}
+                      <circle cx={q[0]} cy={q[1]} r={dragV === i || selV === i ? 18 : 14} fill={dragV === i || selV === i ? '#ffc93c' : '#fff'} stroke={COL.ink} strokeWidth="4" />
                       <text x={q[0] + d[0] / L * 34} y={q[1] + d[1] / L * 34 + 8} textAnchor="middle" fontSize="22" fill={COL.ink} pointerEvents="none">{LABELS[i]}</text>
                     </g>
                   );
