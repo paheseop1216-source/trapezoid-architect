@@ -3,8 +3,29 @@ import { useEffect } from 'react';
 /* 손가락 위치 → SVG 좌표
    getScreenCTM 대신 화면 상자(getBoundingClientRect)와 viewBox로 직접 계산해요.
    (아이패드 사파리에서 CSS zoom·변형이 섞이면 getScreenCTM이 어긋날 수 있어서) */
+/* 화면 크기(CSS zoom)를 80%·125%로 바꿨을 때 브라우저마다 위치를 다르게 알려 줘요.
+   - 컴퓨터 크롬(표준 방식): getBoundingClientRect가 이미 줄어든 '보이는 크기'
+   - 아이패드 사파리·크롬(옛 방식): 줄이기 전 크기 → 손가락 위치와 어긋나 꼭짓점이 왼쪽 위로 밀려요
+   그래서 '보이는 크기 ÷ 원래 크기'를 재서 옛 방식이면 zoom 배율을 곱해 맞춰요. */
+export function currentZoom() {
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--zoom')) || 1;
+}
+export function rectScale(el) {
+  const z = currentZoom();
+  if (Math.abs(z - 1) < 1e-3) return 1;
+  let box = el; while (box && !(box.offsetWidth > 0)) box = box.parentElement;   // SVG는 offsetWidth가 없어서 감싼 상자로 재요
+  if (!box) return 1;
+  const ratio = box.getBoundingClientRect().width / box.offsetWidth;
+  return Math.abs(ratio - z) < Math.abs(ratio - 1) ? 1 : z;
+}
+/* 손가락(clientX/Y)과 같은 기준의 화면 상자 */
+export function visualRect(el) {
+  const r = el.getBoundingClientRect(), f = rectScale(el);
+  return f === 1 ? r : { left: r.left * f, top: r.top * f, width: r.width * f, height: r.height * f };
+}
+
 export function svgPoint(svg, e) {
-  const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal;
+  const r = visualRect(svg), vb = svg.viewBox.baseVal;
   const s = Math.min(r.width / vb.width, r.height / vb.height) || 1;
   const ox = r.left + (r.width - vb.width * s) / 2, oy = r.top + (r.height - vb.height * s) / 2;
   return { x: vb.x + (e.clientX - ox) / s, y: vb.y + (e.clientY - oy) / s };

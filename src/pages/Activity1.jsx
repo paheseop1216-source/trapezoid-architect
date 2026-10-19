@@ -5,6 +5,7 @@ import { SHAPES, OX, FILLS, LABELS, COL } from '../lib/data.js';
 import { shapeDone } from '../lib/stars.js';
 import { MiniQuad, ParallelMarks, pts } from '../components/Shapes.jsx';
 import { Field, Feedback, TeacherMemo, PageHead } from '../components/ui.jsx';
+import { currentZoom } from '../lib/touch.js';
 
 const shapeById = id => SHAPES.find(s => s.id === id);
 
@@ -44,7 +45,8 @@ function Sort({ goSub }) {
     onPointerMove: e => {
       const d = drag.current; if (!d) return;
       if (!d.moving && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) > 8) d.moving = true;
-      if (d.moving) { setGhost({ id, x: e.clientX, y: e.clientY, w: d.w, h: d.h }); setOver(binAt(e.clientX, e.clientY)); }
+      /* 끄는 카드는 화면 크기(zoom) 안에 있어서 손가락 위치를 zoom으로 나눠 맞춰요 */
+      if (d.moving) { setGhost({ id, x: e.clientX, y: e.clientY, w: d.w, h: d.h, z: currentZoom() }); setOver(binAt(e.clientX, e.clientY)); }
     },
     onPointerUp: e => {
       const d = drag.current; drag.current = null; setGhost(null); setOver(null);
@@ -117,7 +119,7 @@ function Sort({ goSub }) {
         <Feedback fb={fb} />
       </section>
       {ghost && (() => { const sh = shapeById(ghost.id); return (
-        <div className="shape ghost" style={{ left: ghost.x - ghost.w / 2, top: ghost.y - ghost.h / 2, width: ghost.w, height: ghost.h }}>
+        <div className="shape ghost" style={{ left: ghost.x / ghost.z - ghost.w / 2, top: ghost.y / ghost.z - ghost.h / 2, width: ghost.w, height: ghost.h }}>
           <MiniQuad p={sh.p} fill={FILLS[SHAPES.indexOf(sh) % FILLS.length]} /><div className="tag">{sh.tag}</div>
         </div>); })()}
       <TeacherMemo title="분류하기">

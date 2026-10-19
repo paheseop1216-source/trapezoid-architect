@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { currentZoom, rectScale } from '../lib/touch.js';
 
 /* 점검 화면 — 주소 뒤에 ?debug=1 을 붙이면 오른쪽 아래에 나와요.
    기기 정보, 기능 지원 여부, 최근 터치·포인터 신호를 보여 줘서 '왜 안 되는지' 찾는 데 써요. */
@@ -16,6 +17,7 @@ const feat = () => {
     ['container 쿼리', cs && CSS.supports('container-type: size') ? 'O' : 'X'],
     ['dvh', cs && CSS.supports('height: 100dvh') ? 'O' : 'X'],
     ['화면 크기', getComputedStyle(document.documentElement).getPropertyValue('--zoom') || '1'],
+    ['위치 방식', (() => { const b = document.querySelector('main'); if (!b || !b.offsetWidth) return '-'; const z = currentZoom(); if (z === 1) return '보정 필요 없음(100%)'; return rectScale(b) === 1 ? '표준(보정 없음)' : `옛 방식 → ×${z} 보정`; })()],
   ];
 };
 
