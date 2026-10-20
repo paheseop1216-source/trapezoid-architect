@@ -223,6 +223,9 @@ label.lbl { display: block; margin: 14px 0 6px; }
 .strip .shape svg { height: 70px; }
 .strip .shape .done { position: absolute; top: 2px; right: 4px; font-size: .85em; }
 .find-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, 1fr); gap: 18px; align-items: start; }
+/* 격자 칸이 안의 내용(예: 카드 10장 한 줄)만큼 늘어나 화면 밖으로 넘치지 않게 해요.
+   넘치면 휴대폰 브라우저가 페이지 전체를 축소해 버려요. 카드 목록은 칸 안에서 옆으로 넘겨요. */
+.find-grid > *, .morph > *, .designwrap > *, .grid-intro > *, .wrap-grid > *, .talk-grid > *, .strip-col { min-width: 0; }
 .bigview { background: #fff; border: 1px solid var(--line); border-radius: 18px; display: block; width: min(100%, 560px); aspect-ratio: 1; margin: 0 auto; touch-action: manipulation; transition: all .3s; user-select: none; }
 .bigview .side { cursor: pointer; }
 .bigview .side:hover line:first-child { stroke-width: 11; }
@@ -527,6 +530,8 @@ label.lbl { display: block; margin: 14px 0 6px; }
 /* ---------- 공통 부품 (화면 맞춤용) ---------- */
 :root { --zoom: 1; }
 .shell { zoom: var(--zoom); }
+/* 화면이 옆으로 미끄러져 들어올 때 잠깐 화면 밖으로 나가는 부분을 잘라요 (휴대폰이 옆으로 흔들리지 않게) */
+main { overflow-x: clip; }
 .subbar { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; margin-bottom: 12px; }
 .subbar .segmented { margin: 0; }
 .subbar .guide { flex: 1; min-width: 300px; margin: 0; }
